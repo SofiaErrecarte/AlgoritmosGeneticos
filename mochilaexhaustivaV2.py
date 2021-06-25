@@ -2,10 +2,14 @@ class Objeto:
     def __init__(self,volumen,valor):
         self.volumen=volumen
         self.valor=valor
+        self.utilidad = valor/volumen
     def getVolumen(self):
         return self.volumen
     def getValor(self):
         return self.valor
+    def GetUtilidad(self):
+        return self.utilidad
+
 def valor (s):
     suma=0
     for x in range (0, len (s)):
@@ -24,7 +28,7 @@ objeto.extend([Objeto(770,54)])
 objeto.extend([Objeto(60,18)])
 objeto.extend([Objeto(930,46)])
 objeto.extend([Objeto(353,28)])
-volMax=4200
+vol_max=4200
 
 #pag 19 pdf
 nivel=0
@@ -40,13 +44,13 @@ while (nivel!=-1):
     if s[nivel]==1:
         suma=suma+objeto[nivel].volumen
         #Solucion                      ]
-    if (nivel==len(s)-1) and (suma<volMax) and (valor(s)>voa):
+    if (nivel==len(s)-1) and (suma<vol_max) and (valor(s)>voa):
         voa=valor(s)
         #print (voa)
         for x in range (0,len(s)):
             soa[x]=s[x]
         #Criterio
-    if (nivel<len(s)-1) and (suma<=volMax):
+    if (nivel<len(s)-1) and (suma<=vol_max):
         nivel = nivel + 1
     else:                   
         while (nivel>-1) and (s[nivel]>=1):

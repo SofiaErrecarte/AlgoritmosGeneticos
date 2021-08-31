@@ -43,11 +43,11 @@ def cargar_matriz_distancias():
                 matriz_distancias[j][j] = 0
 
 def buscar_minimo(fila_capital):
-    mini = 999999
+    mini = 999999 #en la primer iteracion la primera que encuentra ya esta 
     for i in range(len(fila_capital)):
         if(fila_capital[i] != 0 and fila_capital[i]<mini and fila_capital.index(fila_capital[i]) not in ciudades_indice ): #Chequea que el minimo no sea un 0, que sea menor a min y que no haya pasado ya por la capital                                                                             
-            mini = fila_capital[i] #Guardo el nuevo minimo
-            indice = fila_capital.index(fila_capital[i]) #Guardo indice
+            mini = fila_capital[i] #Guardo la distancia minima nueva de la capital 
+            indice = fila_capital.index(fila_capital[i]) #Guardo indice minimo actual
     ciudades_indice.append(indice)
     ciudades_distancias.append(mini)
     ciudades_recorridas.append(nombres_capitales[indice])
@@ -56,18 +56,18 @@ def buscar_minimo(fila_capital):
 def heuristica(indice_cap):
     ciudades_indice.append(indice_cap) #Agrego la primera capital a la lista de indices 
     ciudades_recorridas.append(nombres_capitales[indice_cap]) #Agrego el primer nombre a la lista de capitales recorridas
-    indice_cap_2 = indice_cap #rebautizo inicializador para usarlo despues
+    indice_cap_inicial = indice_cap #para poder asignarlo como ultima ciudad
     for i in range(len(nombres_capitales)-1):
         fila_capital = matriz_distancias[indice_cap]
-        indice_cap =  buscar_minimo(fila_capital) #busco la capital mas cercana a la capital actual
+        indice_cap =  buscar_minimo(fila_capital) #busco el indice de la capital mas cercana a la capital actual
     ciudades_indice.append(ciudades_indice[0]) #Agregamos la primer capital para que vuelva a origen.
-    ciudades_distancias.append(matriz_distancias[ciudades_indice[23]][indice_cap_2]) #Agregamos el recorrido de la ultima capital al origen
-    ciudades_recorridas.append(nombres_capitales[indice_cap_2])
+    ciudades_distancias.append(matriz_distancias[ciudades_indice[23]][indice_cap_inicial]) #Agregamos el recorrido de la ultima capital al origen
+    ciudades_recorridas.append(nombres_capitales[indice_cap_inicial])
 
 
 cargar_matriz_distancias()
 for i in range(len(nombres_capitales)):
-        print(i," - ", nombres_capitales[i])
+    print(i," - ", nombres_capitales[i])
 capital_elegida = int(input("Ingrese una capital de partida \n"))
 heuristica(capital_elegida)
 print(ciudades_recorridas)

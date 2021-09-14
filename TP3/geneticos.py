@@ -44,6 +44,11 @@ nombresCapital = [
     "Ushuaia",
     "Viedma"]
 
+direct_capitales = [[85,75],[6,130],[87,195],[96,218],[93,69],[-35,163],[-61,103],[-46,0],[59,124],
+[133,195],[-3,-74],[85,195],[-39,-220],[-17,181],[-11,211],[-13,252],[-14,243],[-59,128],[-26,99],
+[57,125],[7,43],[4,191],[-29,-270],[21,-30]] #Direcciones X e Y en el mapa politico de ARG
+
+
 def cargaMatrizDeDistancias():
     data = pd.read_excel('C:\\Users\\Usuario\\Desktop\\TablaCapitales.xlsx') 
     for i in range(24):
@@ -145,7 +150,7 @@ def crossover(poblacion,list_fitness):
     #print(len(nuevaPoblacion))
     return nuevaPoblacion
 
-def elite(poblacion,list_fitness,funcion_obj):
+def elite(poblacion,list_fitness):
     ruleta = crear_ruleta(list_fitness)
     nuevaPoblacion = []
     indices = np.array(funcion_obj)
@@ -247,10 +252,11 @@ for i in range(ciclos):
     if (dist_min < valor_cromosoma_optimo) or (valor_cromosoma_optimo == 0):
         valor_cromosoma_optimo = dist_min
         cromosoma_optimo = optimo
-    #poblacion=crossover(poblacion,list_fitness)
-    poblacion=crossover_rango(list_fitness,poblacion)
+    poblacion=crossover(poblacion,list_fitness)
+    #poblacion=elite(poblacion,list_fitness)
+    #poblacion=crossover_rango(list_fitness,poblacion)
     poblacion=mutacion(poblacion)
-
+imprime_mapa(cromosoma_optimo)
 tabla()
 print(promedios)
 print("Cromosoma óptimo: ", cromosoma_optimo)

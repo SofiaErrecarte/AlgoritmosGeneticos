@@ -34,12 +34,17 @@ nombres_capitales = [
     "Viedma"]
 matriz_distancias=[]
 listaNumeros = np.arange(0,24)
-cantPoblacionInicial=50
+cant_poblacion=50
 prob_crossover=0.75
 prob_mutacion=0.05
 ciclos=200
-ruta= "C:\\Users\\Usuario\\Desktop\\Tabla.xlsx"
-
+minimos=[]
+maximos=[]
+promedios=[]
+optimos=[]
+valor_cromosoma_optimo=0
+cromosoma_optimo=[]
+ruta = "C:\\Users\\Usuario\\Desktop\\Tabla.xlsx"
 def cargar_matriz_distancias():
     data = pd.read_excel('C:\\Users\\Usuario\\Desktop\\TablaCapitales.xlsx') 
     for i in range(24):
@@ -71,54 +76,49 @@ def heuristica(indice_cap):
     ciudades_distancias.append(matriz_distancias[ciudades_indice[23]][indice_cap_inicial]) #Agregamos el recorrido de la ultima capital al origen
     ciudades_recorridas.append(nombres_capitales[indice_cap_inicial])
 
-def crearPoblacionInicial():    
+def crear_poblacion():    
     poblacion = []
-    for i in range(cantPoblacionInicial):
-        poblacion.append(rand.sample(list(listaNumeros), 24))
-        poblacion[i].append(poblacion[i][0])   
+    for i in range(cant_poblacion):
+        poblacion.append(rand.sample(list(listaNumeros), 24)) #crea una lista random de 0 a 24
+        poblacion[i].append(poblacion[i][0]) #agrega la capital inicial al final        
     return poblacion
 
-def calcularFuncionObjetivo(poblacion):
-    funcion_obj=list(np.zeros(cantPoblacionInicial))
-    for i in range(cantPoblacionInicial):
+def calcular_funcion_objetivo(poblacion):
+    funcion_obj = []
+    for i in range(len(poblacion)):
         suma = 0
-        for j in range (len(poblacion[i])-1):
+        for j in range(len(poblacion[i])-1):
             suma += matriz_distancias[poblacion[i][j]][poblacion[i][j+1]]
-        #suma+=matriz_distancias[poblacion[i][j+1]][poblacion[i][0]] #esta la agrego por vuelve a ciu de inicio
-        funcion_obj[i] = suma
+        suma+=matriz_distancias[poblacion[i][j+1]][poblacion[i][0]]
+        funcion_obj.append(suma)
+    #print(min(funcion_obj))
     return funcion_obj
 
-def calcularFitness(funcion_obj):
-    list_fitness=list(np.zeros(cantPoblacionInicial))
-    sumatoria = sum(funcion_obj)
-    for i in range(cantPoblacionInicial):                          
-        list_fitness[i] = (1 - (funcion_obj[i]/sumatoria))
+def calcular_fitness(funcion_obj):
+    list_fitness= list(np.zeros(cant_poblacion))
+    for i in range(cant_poblacion):                          
+        list_fitness[i] = (1/funcion_obj[i])
+    sumatoria = 0
+    for i in range(len(list_fitness)):
+        sumatoria += list_fitness[i]
+    for i in range(len(list_fitness)):
+        list_fitness[i] = list_fitness[i]/sumatoria
+    #print(sum(list_fitness))
     return list_fitness
 
-def crearRuleta(list_fitness):
-    nuevoFitness = list(np.zeros(cantPoblacionInicial))
-    sumaFitness = sum(list_fitness)
-    for i in range(len(list_fitness)):
-        nuevoFitness[i] = (list_fitness[i]/sumaFitness)
-    fitnes_acum = []
-    fitnes_acum.append(nuevoFitness[0])
-    for i in range(1,cantPoblacionInicial):
-        acumulado = fitnes_acum[i - 1] + nuevoFitness[i]
-        fitnes_acum.append(acumulado)
-    #print(fitnes_acum)
-    return fitnes_acum
-
-def crearRango (list_fitness,poblacion):
-    rango=[]
-    mejores_fitness=[]
-    indices= list(np.argsort(list_fitness)) #Ordeno los indices de menor a mayor y los hago lista para recorrerlos
-    #print(indices)
-    for i in range(16,len(indices)): #Me quedo con los 24 mejores
-        mejores_fitness.append(indices[i])
-    for i in range(len(mejores_fitness)): #agrego los 24 mejores a la población
-        rango.append(poblacion[i])
-    return rango
-
+def crear_ruleta(list_fitness):
+    ruleta = []
+    acumulado = [list_fitness[0]]
+    for i in range(len(list_fitness)-1):
+        acumulado.append(acumulado[i]+list_fitness[i+1]) #Armo la lista de fitness acumulada
+    for i in range(cant_poblacion):
+        rul = rand.uniform(0,1)
+        for i in range(cant_poblacion):
+            if (rul<=acumulado[i]):
+                ruleta.append(i)
+                break
+    return ruleta 
+    
 def crossoverCiclico(padre1, padre2):
     posActual=0 #variable aux 
 
@@ -144,134 +144,115 @@ def crossoverCiclico(padre1, padre2):
     
     hijo1.append(hijo1[0])
     hijo2.append(hijo2[0])
-    #print('hijo1 ', hijo1)
-    #print('hijo2', hijo2)
     return hijo1,hijo2
 
+def crossover(poblacion,list_fitness):
+    ruleta = crear_ruleta(list_fitness)
+    x = rand.uniform(0,1)
+    nuevaPoblacion = []
+    i = 0
+    for _ in range(25): 
+        if(x<=prob_crossover):
+            ind1 = ruleta[i]
+            ind2 = ruleta[i+1]        
+            reco1 = poblacion[ind1]
+            reco2 = poblacion[ind2] 
+            padre1,padre2=crossoverCiclico(reco1,reco2)
+            nuevaPoblacion.append(padre1)
+            nuevaPoblacion.append(padre2)
+            i+=2
+        elif(x>prob_crossover):
+            nuevaPoblacion.append(poblacion[i])
+            nuevaPoblacion.append(poblacion[i+1])
+            i+=2
+    #print(len(nuevaPoblacion))
+    return nuevaPoblacion
+
+def elite(poblacion,list_fitness):
+    ruleta = crear_ruleta(list_fitness)
+    nuevaPoblacion = []
+    indices = np.array(funcion_obj)
+    indices=indices.argsort() 
+    for i in range(10):
+        j=indices[i]
+        nuevaPoblacion.append(poblacion[j])
+    '''for i in range(10):
+        print(nuevaPoblacion[i])'''
+    x = rand.uniform(0,1)
+    i = 0
+    for _ in range(20): 
+        if(x<=prob_crossover):
+            ind1 = ruleta[i]
+            ind2 = ruleta[i+1]        
+            reco1 = poblacion[ind1]
+            reco2 = poblacion[ind2] 
+            padre1,padre2=crossoverCiclico(reco1,reco2)
+            nuevaPoblacion.append(padre1)
+            nuevaPoblacion.append(padre2)
+            i+=2
+        elif(x>prob_crossover):
+            nuevaPoblacion.append(poblacion[i])
+            nuevaPoblacion.append(poblacion[i+1])
+            i+=2
+    return nuevaPoblacion
+
 def crossover_rango(list_fitness,poblacion):
-    hijos = []
-    rango=crearRango(list_fitness,poblacion)
-    for i in range(len(rango)):
-        hijos.append(rango[i])
-    #print('RULETA: ',ruleta)
-    
-    for i in range (0,16,2):#16 son los que reemplazo por crossover entre los 24 elegidos 
+    nuevaPoblacion = []
+    rango=[]
+    #print(list_fitness)
+    indices = np.array(list_fitness)
+    indices=indices.argsort() 
+    #print(indices)
+    for i in range(20,50):
+        j=indices[i]
+        rango.append(poblacion[j])
+    '''for i in range(30):
+        print(nuevaPoblacion[i])'''
+    for i in range(30):
+        nuevaPoblacion.append(rango[i])
+    #print('poblacion ',nuevaPoblacion)
+    for i in range (0,20,2):#20 son los que reemplazo por crossover entre los 30 elegidos 
         padre_1 = rand.choice(rango)
         padre_2 = rand.choice(rango)
         if (rand.random() <= prob_crossover):
             padre_1,padre_2=crossoverCiclico(padre_1,padre_2)
-        hijos.append(padre_1)
-        hijos.append(padre_2)
-    return hijos
-
-def elegir_ruleta(ruleta,poblacion):
-    padres = []
-    for _ in range(2):
-        frec = rand.uniform(0,1)
-        for i in range(cantPoblacionInicial):
-            if(ruleta[i] > frec):
-                poblacion[i].pop() #Le quito el ultimo que seria la misma cap donde arranca
-                padres.append(poblacion[i])  #Agrego como padre elegido esa poblacion sin esa ultima capital
-                poblacion[i].append(poblacion[i][0])  #le vuelvo a setear esa capital al final a la poblacion inicial   
-                break
-    return padres[0], padres[1]
-
-def crossover(list_fitness,poblacion):
-    ruleta=crearRuleta(list_fitness)
-    aux=np.array(funcion_obj)
-    min1 = aux.argsort()[0]
-    min2 = aux.argsort()[1]
-    aux = list(aux)
-    aux[0] = poblacion[min1]
-    aux[1] = poblacion[min2]
-    for i in range (2,len(poblacion)-1,2):
-        padre_1,padre_2 = elegir_ruleta(ruleta,poblacion) 
-        padre_1,padre_2=crossoverCiclico(padre_1,padre_2)
-        aux[i]=padre_1
-        aux[i + 1]= padre_2
-        #hijos[i] = padre_1
-        #hijos[i + 1]= padre_2
-    #print('hijos', hijos)
-    return aux
-
-def crossover_elitismo(list_fitness,poblacion):
-    #Tomo los 10 cromosomas con mejores fitnes y los mantengo
-    #print(list_fitness)
-    hijos = []
-    mejores_fitness=[]
-    indices= list(np.argsort(list_fitness)) #Ordeno los indices de menor a mayor y los hago lista para recorrerlos
-    #print(indices)
-    for i in range(40,len(indices)): #Me quedo con los 10 mejores
-        mejores_fitness.append(indices[i])
-    #print(mejores_fitness)
-    ruleta=crearRuleta(list_fitness)
-    for i in range(len(mejores_fitness)): #agrego los 10 mejores a la población
-        hijos.append(poblacion[i])
-    #print(hijos)
-    for i in range (0,len(poblacion)-1-10,2):
-        padre_1,padre_2 = elegir_ruleta(ruleta,poblacion)
-        #print('Padre1',padre_1)
-        #print('Padre2',padre_2)        
-        #padre_1 = rand.choice(ruleta)
-        #padre_2 = rand.choice(ruleta)
-        #if (rand.random() <= prob_crossover):
-        padre_1,padre_2=crossoverCiclico(padre_1,padre_2)
-        hijos.append(padre_1)
-        hijos.append(padre_2)
-    return hijos
+        nuevaPoblacion.append(padre_1)
+        nuevaPoblacion.append(padre_2)
+    for i in range(30):
+        nuevaPoblacion.append(rango[i])
+    #print('nueva ',nuevaPoblacion)
+    return nuevaPoblacion
 
 def mutacion(poblacion):
-    for i in range(len(poblacion)):  
-        x = rand.uniform(0,1)
-        if(x<=prob_mutacion):
-            aleat_1 = rand.randrange(0,23)
-            aleat_2 = rand.randrange(0,23)
-            while(aleat_2 == aleat_1):
-                aleat_2 = rand.randrange(0,23)
-            aux = poblacion[i][aleat_1]
-            poblacion[i][aleat_1] = poblacion[i][aleat_2]
-            poblacion[i][aleat_2] = aux
+    x=rand.random()
+    for i in range(50):
+        if(x <= prob_mutacion):
+            r1 = rand.randrange(0,23)
+            r2 = rand.randrange(0,23)
+            while(r1==r2):
+                r1=rand.randrange(0,23)
+            aux = poblacion[i][r1]
+            poblacion[i][r1] = poblacion[i][r2]
+            poblacion[i][r2] = aux
     return poblacion
 
-def tabla(op):
-    lista_excel = []
-    lista_excel.append(list(range(1,ciclos+1)))
-    lista_excel.append(maximos)
-    lista_excel.append(minimos)
-    lista_excel.append(promedios)
-    lista_excel.append(lista_optimo)
-    df=pd.DataFrame(lista_excel)
-    df = df.T
-    df.columns = ['Corrida','Maximo FO','Minimo FO','Promedio FO','Lista Optimo']
-    tabla = pd.ExcelWriter(ruta, engine='xlsxwriter') 
-    if (op==3):
-        df.to_excel(tabla, sheet_name='Geneticos', index = False)     
-        workbook = tabla.book
-        worksheet = tabla.sheets["Geneticos"] 
-        formato = workbook.add_format({"align": "center"})
+def tabla():
+    generacion = np.arange(1, ciclos + 1)
+    
+    ######## TABLA EXCEL ########
+    Datos = pd.DataFrame({"Generacion": generacion, "Minimo FO": minimos, "Maximo FO": maximos, "Promedio FO": promedios,"Optimo":optimos})  
+    Tabla = pd.ExcelWriter('C:\\Users\\Usuario\\Desktop\\Tabla.xlsx', engine='xlsxwriter') 
+    Datos.to_excel(Tabla, sheet_name='Valores', index = False)     
 
-        worksheet.set_column("A:D", 15, formato)  
-        worksheet.conditional_format("D1:DF"+str(len(promedios)+1), {"type": "3_color_scale", "max_color": "red", "mid_color": "yellow", "min_color": "green"})
+    workbook = Tabla.book
+    worksheet = Tabla.sheets["Valores"] 
 
-    elif(op==4):
-        df.to_excel(tabla, sheet_name='Geneticos elite', index = False)     
-        workbook = tabla.book
-        worksheet = tabla.sheets["Geneticos elite"] 
-        formato = workbook.add_format({"align": "center"})
+    formato = workbook.add_format({"align": "center"})
 
-        worksheet.set_column("A:D", 15, formato)  
-        worksheet.conditional_format("D1:DF"+str(len(promedios)+1), {"type": "3_color_scale", "max_color": "red", "mid_color": "yellow", "min_color": "green"})
+    worksheet.set_column("A:D", 15, formato)  
+    worksheet.conditional_format("D1:DF"+str(len(promedios)+1), {"type": "3_color_scale", "max_color": "red", "mid_color": "yellow", "min_color": "green"})
 
-    elif(op==5):
-        df.to_excel(tabla, sheet_name='Rango', index = False)     
-        workbook = tabla.book
-        worksheet = tabla.sheets["Rango"] 
-        formato = workbook.add_format({"align": "center"})
-
-        worksheet.set_column("A:D", 15, formato)  
-        worksheet.conditional_format("D1:DF"+str(len(promedios)+1), {"type": "3_color_scale", "max_color": "red", "mid_color": "yellow", "min_color": "green"})
-
-    tabla.save()
+    Tabla.save()
 
 
 #reemplazo 16 me quedo con 24
@@ -281,7 +262,6 @@ ciudades_distancias = []
 ciudades_recorridas = []
 distancias= []
 recorridos=[]
-ciudades_recorridas = []
 
 #MENU
 print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético con ruleta \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
@@ -291,16 +271,15 @@ while(op!=6):
         ciudades_indice = []
         ciudades_distancias = []
         ciudades_recorridas = []
-        ciudades_recorridas = []
         for i in range(len(nombres_capitales)):
             print(i," - ", nombres_capitales[i])
         capital_elegida = int(input("Ingrese una capital de partida \n"))
         heuristica(capital_elegida)
-        print(ciudades_recorridas)
-        print(ciudades_distancias)
-        print('Recorrido\t'+str(sum(ciudades_distancias)) + 'km')
+        #print(ciudades_distancias)
+        print('Distancia\t'+str(sum(ciudades_distancias)) + 'km')
         print('Capital de partida:   ',nombres_capitales[capital_elegida])
-        print(ciudades_indice)
+        print('Recorrido\t:',ciudades_indice)
+        print('Ciudades\t:',ciudades_recorridas)
         print('1.Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==2):#elección de heuristica general
@@ -308,112 +287,115 @@ while(op!=6):
         ciudades_distancias = []
         distancias= []
         recorridos=[]
+        ciudades_recorridas = []
         for i in range(len(nombres_capitales)):
             heuristica(i)
             distancias.append(sum(ciudades_distancias)) #Guarda la sumatoria de los recorridos minimos.
             recorridos.append(ciudades_indice) #Guardo los recorridos partiendo de cada capital
             ciudades_indice = [] #Sobreescribo las listas para cada iteración del bucle.
             ciudades_distancias = []
-        for i in range(len(distancias)):
+        '''for i in range(len(distancias)):
             print(distancias[i])
         for i in range(len(recorridos)):
-            print(recorridos[i])
+            print(recorridos[i])'''
         for i in range(len(distancias)):
             if(distancias[i] == min(distancias)):
                 indice_mejor = i
-        print('recorrido: ',recorridos[indice_mejor])
-        print('mejor: ',min(distancias))
-        print('capital: ', nombres_capitales[indice_mejor])
+        print('Distancia\t'+ str(min(distancias))+ 'km')
+        print('Capital de partida:   ',nombres_capitales[indice_mejor])
+        print('Recorrido\t:',recorridos[indice_mejor])
+        mejor_recorrido = recorridos[indice_mejor]
+        nombres_mejor=[]
+        for i in range(len(nombres_capitales)):
+            nombres_mejor.append(nombres_capitales[mejor_recorrido[i]])
+        print('Ciudades\t:',nombres_mejor)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==3):
-        poblacion=crearPoblacionInicial()
-        funcion_obj= calcularFuncionObjetivo(poblacion)
-        list_fitness= calcularFitness(funcion_obj)
-        promedios=[]
-        maximos=[]
         minimos=[]
-        lista_optimo=[]
-        valor_cromosoma_optimo = 0
-        cromosoma_optimo = []
-        for x in range (ciclos):
-            minimoObj = min(funcion_obj)
-            minimos.append(minimoObj)
+        maximos=[]
+        promedios=[]
+        optimos=[]
+        valor_cromosoma_optimo=0
+        cromosoma_optimo=[]
+        poblacion= crear_poblacion()
+        for i in range(ciclos):
+            funcion_obj = calcular_funcion_objetivo(poblacion)
+            list_fitness = calcular_fitness(funcion_obj)
+            dist_min = min(funcion_obj)
+            minimos.append(dist_min)
             maximos.append(max(funcion_obj))
             promedios.append(np.mean(funcion_obj))
-            indice = funcion_obj.index(minimoObj)
+            indice = funcion_obj.index(dist_min)
             optimo = poblacion[indice]
-            lista_optimo.append(optimo)
-            if (minimoObj < valor_cromosoma_optimo) or (valor_cromosoma_optimo == 0):
-                valor_cromosoma_optimo = minimoObj
+            optimos.append(optimo)
+            if (dist_min < valor_cromosoma_optimo) or (valor_cromosoma_optimo == 0):
+                valor_cromosoma_optimo = dist_min
                 cromosoma_optimo = optimo
-            poblacion=crossover(list_fitness,poblacion)
-            #poblacion = mutacion(poblacion)
-            print(poblacion)
-            funcion_obj= calcularFuncionObjetivo(poblacion)
-            list_fitness= calcularFitness(funcion_obj)
-        tabla(3)
+            poblacion=crossover(poblacion,list_fitness)
+            poblacion=mutacion(poblacion)
+        tabla()
+        #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==4):
-        promedios=[]
-        maximos=[]
         minimos=[]
-        lista_optimo=[]
-        valor_cromosoma_optimo = 0
-        cromosoma_optimo = []
-        poblacion=crearPoblacionInicial()
-        funcion_obj= calcularFuncionObjetivo(poblacion)
-        list_fitness= calcularFitness(funcion_obj)
-        for x in range (ciclos):
-            minimoObj = min(funcion_obj)
-            minimos.append(minimoObj)
+        maximos=[]
+        promedios=[]
+        optimos=[]
+        valor_cromosoma_optimo=0
+        cromosoma_optimo=[]
+        poblacion= crear_poblacion()
+        for i in range(ciclos):
+            funcion_obj = calcular_funcion_objetivo(poblacion)
+            list_fitness = calcular_fitness(funcion_obj)
+            dist_min = min(funcion_obj)
+            minimos.append(dist_min)
+            maximos.append(max(funcion_obj))
             promedios.append(np.mean(funcion_obj))
-            indice = funcion_obj.index(minimoObj)
+            indice = funcion_obj.index(dist_min)
             optimo = poblacion[indice]
-            lista_optimo.append(optimo)
-            if (minimoObj < valor_cromosoma_optimo) or (valor_cromosoma_optimo == 0):
-                valor_cromosoma_optimo = minimoObj
+            optimos.append(optimo)
+            if (dist_min < valor_cromosoma_optimo) or (valor_cromosoma_optimo == 0):
+                valor_cromosoma_optimo = dist_min
                 cromosoma_optimo = optimo
-            poblacion=crossover_elitismo(list_fitness,poblacion)
-            poblacion = mutacion(poblacion)
-            funcion_obj= calcularFuncionObjetivo(poblacion)
-            list_fitness= calcularFitness(funcion_obj)
-        tabla(4)
+            poblacion=elite(poblacion,list_fitness)
+            poblacion=mutacion(poblacion)
+        tabla()
+        #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==5):
-        promedios=[]
-        maximos=[]
         minimos=[]
-        lista_optimo=[]
-        valor_cromosoma_optimo = 0
-        cromosoma_optimo = []
-        poblacion=crearPoblacionInicial()
-        funcion_obj= calcularFuncionObjetivo(poblacion)
-        list_fitness= calcularFitness(funcion_obj)
-        for x in range (ciclos):
-            minimoObj = min(funcion_obj)
-            minimos.append(minimoObj)
+        maximos=[]
+        promedios=[]
+        optimos=[]
+        valor_cromosoma_optimo=0
+        cromosoma_optimo=[]
+        poblacion= crear_poblacion()
+        for i in range(ciclos):
+            funcion_obj = calcular_funcion_objetivo(poblacion)
+            list_fitness = calcular_fitness(funcion_obj)
+            dist_min = min(funcion_obj)
+            minimos.append(dist_min)
+            maximos.append(max(funcion_obj))
             promedios.append(np.mean(funcion_obj))
-            indice = funcion_obj.index(minimoObj)
+            indice = funcion_obj.index(dist_min)
             optimo = poblacion[indice]
-            lista_optimo.append(optimo)
-            if (minimoObj < valor_cromosoma_optimo) or (valor_cromosoma_optimo == 0):
-                valor_cromosoma_optimo = minimoObj
+            optimos.append(optimo)
+            if (dist_min < valor_cromosoma_optimo) or (valor_cromosoma_optimo == 0):
+                valor_cromosoma_optimo = dist_min
                 cromosoma_optimo = optimo
             poblacion=crossover_rango(list_fitness,poblacion)
-            poblacion = mutacion(poblacion)
-            funcion_obj= calcularFuncionObjetivo(poblacion)
-            list_fitness= calcularFitness(funcion_obj)
-        tabla(5)
+            poblacion=mutacion(poblacion)
+        tabla()
+        #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
-
         

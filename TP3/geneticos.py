@@ -3,6 +3,7 @@ import numpy as np
 import random as rand
 from numpy.core.numeric import zeros_like
 import pandas as pd
+import plotly.express as px
 
 cant_poblacion = 50
 listaNumeros = np.arange(0,24)
@@ -236,6 +237,16 @@ def crossover_rango(list_fitness,poblacion):
     print('nueva ',nuevaPoblacion)
     return nuevaPoblacion
 
+def imprime_mapa(cromosoma_optimo):
+    listaOrdenada = []
+    dfCapitales = pd.read_csv("C:\\Users\\Usuario\\Desktop\\provincias.csv")
+    listaCapitales = dfCapitales.values.tolist()
+    for i in cromosoma_optimo:
+        listaOrdenada.append(listaCapitales[i])
+        fig = px.line_mapbox(listaOrdenada, lat=1, lon=2, zoom=3, width=1000,height=900)
+        fig.update_layout(mapbox_style="stamen-terrain", mapbox_zoom=3.8, mapbox_center_lat = -40,margin={"r":0,"t":0,"l":0,"b":0})
+    fig.show()
+    
 cargaMatrizDeDistancias()
 poblacion= crear_poblacion()
 #print('Poblacion inicial: ',poblacion)
@@ -256,6 +267,7 @@ for i in range(ciclos):
     #poblacion=elite(poblacion,list_fitness)
     #poblacion=crossover_rango(list_fitness,poblacion)
     poblacion=mutacion(poblacion)
+
 imprime_mapa(cromosoma_optimo)
 tabla()
 print(promedios)

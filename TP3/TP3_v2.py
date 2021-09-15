@@ -2,7 +2,8 @@ import numpy as np
 from numpy.core.fromnumeric import argsort
 from numpy.lib.function_base import append
 import pandas as pd
-import openpyxl
+import matplotlib.pyplot as plt
+import plotly.express as px
 import random as rand
 import os
 
@@ -45,6 +46,8 @@ optimos=[]
 valor_cromosoma_optimo=0
 cromosoma_optimo=[]
 ruta = "C:\\Users\\Usuario\\Desktop\\Tabla.xlsx"
+
+
 def cargar_matriz_distancias():
     data = pd.read_excel('C:\\Users\\Usuario\\Desktop\\TablaCapitales.xlsx') 
     for i in range(24):
@@ -71,7 +74,9 @@ def heuristica(indice_cap):
     indice_cap_inicial = indice_cap #para poder asignarlo como ultima ciudad
     for i in range(len(nombres_capitales)-1):
         fila_capital = matriz_distancias[indice_cap]
+        #print(fila_capital)
         indice_cap =  buscar_minimo(fila_capital) #busco el indice de la capital mas cercana a la capital actual
+        #print(indice_cap)
     ciudades_indice.append(ciudades_indice[0]) #Agregamos la primer capital para que vuelva a origen.
     ciudades_distancias.append(matriz_distancias[ciudades_indice[23]][indice_cap_inicial]) #Agregamos el recorrido de la ultima capital al origen
     ciudades_recorridas.append(nombres_capitales[indice_cap_inicial])
@@ -254,7 +259,24 @@ def tabla():
 
     Tabla.save()
 
+def graficar_recorrido(mejor_recorrido):
+    lista = []
+    capitales = pd.read_csv("C:\\Users\\Usuario\\Desktop\\provincias.csv")
+    lista_capitales = capitales.values.tolist()
+    for i in mejor_recorrido:
+        lista.append(lista_capitales[i])
+        fig = px.line_mapbox(lista, lat=1, lon=2, zoom=3, width=1000,height=900)
+        fig.update_layout(mapbox_style="stamen-terrain", mapbox_zoom=3.8, mapbox_center_lat = -40,margin={"r":0,"t":0,"l":0,"b":0})
+    fig.show()
 
+def graficar_geneticos (promedios,maximos,minimos,titulo):
+    print('promedios', promedios)
+    plt.plot(promedios,'g', label = "Promedios")
+    plt.plot(maximos,'r',  label = "Maximos")
+    plt.plot(minimos,'m' ,label = "Minimos")
+    plt.legend(loc="lower right")
+    plt.title(titulo)
+    plt.show()
 #reemplazo 16 me quedo con 24
 cargar_matriz_distancias()
 ciudades_indice = []
@@ -267,7 +289,7 @@ recorridos=[]
 print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético con ruleta \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
 op= int(input("Ingrese una opcion del menú \n"))
 while(op!=6):
-    if(op==1): #elección de heuristica con capital
+    if(op==1):#elección de heuristica con capital
         ciudades_indice = []
         ciudades_distancias = []
         ciudades_recorridas = []
@@ -280,6 +302,7 @@ while(op!=6):
         print('Capital de partida:   ',nombres_capitales[capital_elegida])
         print('Recorrido\t:',ciudades_indice)
         print('Ciudades\t:',ciudades_recorridas)
+        graficar_recorrido(ciudades_indice)
         print('1.Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==2):#elección de heuristica general
@@ -294,10 +317,6 @@ while(op!=6):
             recorridos.append(ciudades_indice) #Guardo los recorridos partiendo de cada capital
             ciudades_indice = [] #Sobreescribo las listas para cada iteración del bucle.
             ciudades_distancias = []
-        '''for i in range(len(distancias)):
-            print(distancias[i])
-        for i in range(len(recorridos)):
-            print(recorridos[i])'''
         for i in range(len(distancias)):
             if(distancias[i] == min(distancias)):
                 indice_mejor = i
@@ -309,6 +328,7 @@ while(op!=6):
         for i in range(len(nombres_capitales)):
             nombres_mejor.append(nombres_capitales[mejor_recorrido[i]])
         print('Ciudades\t:',nombres_mejor)
+        graficar_recorrido(mejor_recorrido)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==3):
@@ -338,6 +358,8 @@ while(op!=6):
         #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
+        graficar_geneticos (promedios,maximos,minimos,"Algoritmos genéticos sin Elite")
+        graficar_recorrido(cromosoma_optimo)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==4):
@@ -367,6 +389,8 @@ while(op!=6):
         #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
+        graficar_geneticos (promedios,maximos,minimos,"Algoritmos genéticos con Elite")
+        graficar_recorrido(cromosoma_optimo)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
     if(op==5):
@@ -396,6 +420,11 @@ while(op!=6):
         #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
+        graficar_geneticos (promedios,maximos,minimos,"Algoritmos genéticos con Rango")
+        graficar_recorrido(cromosoma_optimo)
         print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
-        
+    if(op!=1 or op!=2 or op!=3 or op!=4 or op!=5 or op!=6):
+        print('Por favor ingrese un valor correcto')
+        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+        op= int(input("Ingrese una opcion del menú \n"))

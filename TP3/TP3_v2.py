@@ -223,9 +223,7 @@ def crossover_rango(list_fitness,poblacion):
             padre_1,padre_2=crossoverCiclico(padre_1,padre_2)
         nuevaPoblacion.append(padre_1)
         nuevaPoblacion.append(padre_2)
-    for i in range(30):
-        nuevaPoblacion.append(rango[i])
-    #print('nueva ',nuevaPoblacion)
+    #print('nueva ',nuevaPoblacion) 
     return nuevaPoblacion
 
 def mutacion(poblacion):

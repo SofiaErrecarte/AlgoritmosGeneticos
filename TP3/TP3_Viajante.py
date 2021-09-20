@@ -5,34 +5,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 import random as rand
-import os
 
-#os.system('cls')
+
 nombres_capitales = [
-    "Ciudad de Buenos Aires",
-    "Córdoba",
-    "Corrientes",
-    "Formosa",
-    "La Plata",
-    "La Rioja",
-    "Mendoza",
-    "Neuquen",
-    "Paraná",
-    "Posadas",
-    "Rawson",
-    "Resistencia",
-    "Río Gallegos",
-    "San Fernando del Valle de Catamarca",
-    "San Miguel de Tucumán",
-    "San Salvador de Jujuy",
-    "Salta",
-    "San Juan",
-    "San Luis",
-    "Santa Fe",
-    "Santa Rosa",
-    "Santiago del Estero",
-    "Ushuaia",
-    "Viedma"]
+    "Ciudad de Buenos Aires",    "Córdoba",    "Corrientes",    "Formosa",    "La Plata",    "La Rioja",    "Mendoza",    "Neuquen",
+    "Paraná",    "Posadas",    "Rawson",    "Resistencia",    "Río Gallegos",    "San Fernando del Valle de Catamarca",
+    "San Miguel de Tucumán",    "San Salvador de Jujuy",    "Salta",    "San Juan",    "San Luis",    "Santa Fe",    "Santa Rosa",
+    "Santiago del Estero",    "Ushuaia",    "Viedma"]
 matriz_distancias=[]
 listaNumeros = np.arange(0,24)
 cant_poblacion=50
@@ -90,9 +69,9 @@ def crear_poblacion():
 
 def calcular_funcion_objetivo(poblacion):
     funcion_obj = []
-    for i in range(len(poblacion)):
+    for i in range(cant_poblacion):
         suma = 0
-        for j in range(len(poblacion[i])-1):
+        for j in range(len(nombres_capitales)-1):
             suma += matriz_distancias[poblacion[i][j]][poblacion[i][j+1]]
         suma+=matriz_distancias[poblacion[i][j+1]][poblacion[i][0]]
         funcion_obj.append(suma)
@@ -223,7 +202,7 @@ def crossover_rango(list_fitness,poblacion):
             padre_1,padre_2=crossoverCiclico(padre_1,padre_2)
         nuevaPoblacion.append(padre_1)
         nuevaPoblacion.append(padre_2)
-    #print('nueva ',nuevaPoblacion) 
+    #print('nueva ',nuevaPoblacion)
     return nuevaPoblacion
 
 def mutacion(poblacion):
@@ -284,9 +263,9 @@ distancias= []
 recorridos=[]
 
 #MENU
-print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético con ruleta \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético con ruleta \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n0.Salir')
 op= int(input("Ingrese una opcion del menú \n"))
-while(op!=6):
+while(op!=0):
     if(op==1):#elección de heuristica con capital
         ciudades_indice = []
         ciudades_distancias = []
@@ -301,9 +280,9 @@ while(op!=6):
         print('Recorrido\t:',ciudades_indice)
         print('Ciudades\t:',ciudades_recorridas)
         graficar_recorrido(ciudades_indice)
-        print('1.Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+        print('1.Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n0.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
-    if(op==2):#elección de heuristica general
+    elif(op==2):#elección de heuristica general
         ciudades_indice = []
         ciudades_distancias = []
         distancias= []
@@ -323,13 +302,13 @@ while(op!=6):
         print('Recorrido\t:',recorridos[indice_mejor])
         mejor_recorrido = recorridos[indice_mejor]
         nombres_mejor=[]
-        for i in range(len(nombres_capitales)):
+        for i in range(len(recorridos[indice_mejor])):
             nombres_mejor.append(nombres_capitales[mejor_recorrido[i]])
         print('Ciudades\t:',nombres_mejor)
         graficar_recorrido(mejor_recorrido)
-        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n0.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
-    if(op==3):
+    elif(op==3):
         minimos=[]
         maximos=[]
         promedios=[]
@@ -353,14 +332,13 @@ while(op!=6):
             poblacion=crossover(poblacion,list_fitness)
             poblacion=mutacion(poblacion)
         tabla()
-        #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
         graficar_geneticos (promedios,maximos,minimos,"Algoritmos genéticos sin Elite")
         graficar_recorrido(cromosoma_optimo)
-        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n0.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
-    if(op==4):
+    elif(op==4):
         minimos=[]
         maximos=[]
         promedios=[]
@@ -384,14 +362,13 @@ while(op!=6):
             poblacion=elite(poblacion,list_fitness)
             poblacion=mutacion(poblacion)
         tabla()
-        #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
         graficar_geneticos (promedios,maximos,minimos,"Algoritmos genéticos con Elite")
         graficar_recorrido(cromosoma_optimo)
-        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n0.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
-    if(op==5):
+    elif(op==5):
         minimos=[]
         maximos=[]
         promedios=[]
@@ -415,14 +392,13 @@ while(op!=6):
             poblacion=crossover_rango(list_fitness,poblacion)
             poblacion=mutacion(poblacion)
         tabla()
-        #print(promedios)
         print("Cromosoma óptimo: ", cromosoma_optimo)
         print("Función objetivo óptima: ", valor_cromosoma_optimo)
         graficar_geneticos (promedios,maximos,minimos,"Algoritmos genéticos con Rango")
         graficar_recorrido(cromosoma_optimo)
-        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n0.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
-    if(op!=1 or op!=2 or op!=3 or op!=4 or op!=5 or op!=6):
-        print('Por favor ingrese un valor correcto')
-        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n6.Salir')
+    else:
+        print('Ingrese una opción válida')
+        print('1. Heuristica con capital \n2.Mejor Heuristica \n3.Algoritmo Genético \n4.Algoritmo Genético con Elite \n5.Algoritmo Genético con rango \n0.Salir')
         op= int(input("Ingrese una opcion del menú \n"))
